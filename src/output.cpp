@@ -1884,6 +1884,16 @@ static bool can_combine_comment(Chunk const *pc, const cmt_reflow &cmt)
 
 static Chunk *output_comment_c(Chunk *first)
 {
+   log_rule_B("eat_comments");
+   if(options::eat_comments())
+   {
+      Chunk *next = first->GetNext();
+      if (next->IsNewline())
+      {
+         next->SetNlCount(0);
+      }
+      return first;
+   }
    cmt_reflow cmt;
 
    output_cmt_start(cmt, first);
@@ -1998,6 +2008,17 @@ static Chunk *output_comment_c(Chunk *first)
 
 static Chunk *output_comment_cpp(Chunk *first)
 {
+   log_rule_B("eat_comments");
+   if(options::eat_comments())
+   {
+      Chunk *next = first->GetNext();
+      if (next->IsNewline())
+      {
+         next->SetNlCount(0);
+      }
+      return first;
+   }
+
    cmt_reflow cmt;
 
    output_cmt_start(cmt, first);
@@ -2329,6 +2350,16 @@ static void output_comment_multi(Chunk *pc)
 {
    if (pc->IsNullChunk())
    {
+      return;
+   }
+   log_rule_B("eat_comments");
+   if(options::eat_comments())
+   {
+      Chunk *next = pc->GetNext();
+      if (next->IsNewline())
+      {
+         next->SetNlCount(0);
+      }
       return;
    }
    cmt_reflow cmt;
@@ -3327,6 +3358,16 @@ static void output_comment_multi_simple(Chunk *pc)
 {
    if (pc->IsNullChunk())
    {
+      return;
+   }
+   log_rule_B("eat_comments");
+   if(options::eat_comments())
+   {
+      Chunk *next = pc->GetNext();
+      if (next->IsNewline())
+      {
+         next->SetNlCount(0);
+      }
       return;
    }
    cmt_reflow cmt;

@@ -4273,6 +4273,10 @@ cmt_insert_before_ctor_dtor;
 ///////////////////////////////////////////////////////////////////////////////
 //BEGIN Code modifying options (non-whitespace)
 
+// Remove all comments or not
+extern Option<bool>
+eat_comments;
+
 // Add or remove braces on a single-line 'do' statement.
 extern Option<iarf_e>
 mod_full_brace_do;
