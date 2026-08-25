@@ -1,7 +1,6 @@
 name: build-uncrustify-wasm
 on:
   push:
-    branches: [master]
     tags: ['b*']
   pull_request:
     branches: [master]
