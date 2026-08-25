@@ -1,0 +1,60 @@
+name: build-uncrustify-wasm
+on:
+  push:
+    branches: [master]
+    tags: ['b*']
+  pull_request:
+    branches: [master]
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) 装 Emscripten（pin 版本，别用 latest，避免哪天工具链升级挂掉）
+      - name: Setup Emscripten
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: 3.1.51
+          actions-cache-folder: emsdk-cache
+
+      # 2) 系统依赖：cmake / python / node（node 用来跑官方自测）
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake python3 nodejs npm
+
+      # 3) 按官方 emscripten/README 走：在 emscripten/ 里建 build 目录
+      - name: Configure
+        run: |
+          mkdir -p emscripten/build
+          cd emscripten/build
+          emcmake cmake -DCMAKE_BUILD_TYPE=Release ..
+
+      # 4) 编译出 libUncrustify.js / .wasm
+      - name: Build
+        run: |
+          cd emscripten/build
+          make -j"$(nproc)"
+
+      # 5) 可选：跑官方 node 自测
+      - name: Test (node)
+        run: |
+          cd emscripten/build
+          make emscripten_test || true
+
+      # 6) 收产物
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          cp emscripten/build/libUncrustify.js dist/ 2>/dev/null || true
+          cp emscripten/build/libUncrustify.wasm dist/ 2>/dev/null || true
+          cp emscripten/libUncrustify.d.ts dist/ 2>/dev/null || true
+          ls -la dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uncrustify-wasm
+          path: dist
