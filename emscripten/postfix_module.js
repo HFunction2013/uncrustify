@@ -1,7 +1,3 @@
-    //! auto initializes the module
-    Module["_initialize"](); //// execute this only one time,
-    Module["_initialize"] = Function.prototype; // and replace it with a noop
-
     /**
      * Takes in a JS string with other params, converts it to UTF8 and
      * passes it to the actual _uncrustify function while also managing the
