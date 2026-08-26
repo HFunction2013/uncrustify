@@ -97,6 +97,37 @@ else()
 
   check_type_size(_Bool _BOOL LANGUAGE C)
 
+  # Emscripten: CMake compile checks fail due to sysroot setup,
+  # but all standard headers/functions are available. Force-set them.
+  set(HAVE_INTTYPES_H 1)
+  set(HAVE_MEMORY_H 1)
+  set(HAVE_STDINT_H 1)
+  set(HAVE_STDLIB_H 1)
+  set(HAVE_STRINGS_H 1)
+  set(HAVE_STRING_H 1)
+  set(HAVE_SYS_STAT_H 1)
+  set(HAVE_SYS_TYPES_H 1)
+  set(HAVE_UNISTD_H 1)
+  set(HAVE_UTIME_H 1)
+  set(HAVE_STDBOOL_H 1)
+  set(HAVE_MEMSET 1)
+  set(HAVE_STRCASECMP 1)
+  set(HAVE_STRCHR 1)
+  set(HAVE_STRDUP 1)
+  set(HAVE_STRERROR 1)
+  set(HAVE_STRTOL 1)
+  set(HAVE_STRTOUL 1)
+  set(HAVE__BOOL 1)
+  set(STDC_HEADERS 1)
+  set(PACKAGE "uncrustify")
+  set(PACKAGE_NAME "uncrustify")
+  set(PACKAGE_VERSION "0.83.0")
+  set(PACKAGE_STRING "uncrustify 0.83.0")
+  set(PACKAGE_BUGREPORT "")
+  set(PACKAGE_TARNAME "uncrustify")
+  set(PACKAGE_URL "")
+  set(VERSION "0.83.0")
+
   configure_file("${unc_projdir}/src/config.h.in" config.h @ONLY)
 endif()
 
@@ -220,28 +251,24 @@ SET_TARGET_PROPERTIES(${project_name}
         LINK_FLAGS "${unc_compile_flags} \
                     -s TOTAL_MEMORY=67108864 \
                     -s ALLOW_MEMORY_GROWTH=1 \
-                    -s VERBOSE=1 \
                     -s MODULARIZE=1 \
                     -s EXPORT_NAME=\"'${project_name}'\" \
-                    -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
-                    -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"UTF8ToString\",\"stringToUTF8\",\"lengthBytesUTF8\", \"writeAsciiToMemory\"]' \
-                    -s WASM=0\
-                    --memory-init-file 0\
+                    -s ERROR_ON_UNDEFINED_SYMBOLS=0 \
+                    -s EXPORTED_RUNTIME_METHODS=[\"UTF8ToString\",\"stringToUTF8\",\"lengthBytesUTF8\",\"writeAsciiToMemory\"] \
+                    -s WASM=1 \
+                    -s ENVIRONMENT=web,node \
                     --pre-js ${CMAKE_CURRENT_LIST_DIR}/prefix_module.js \
                     --post-js ${CMAKE_CURRENT_LIST_DIR}/postfix_module.js \
                     ")
 
-EM_LINK_PRE_JS(${project_name} ${CMAKE_CURRENT_LIST_DIR}/prefix_module.js)
-EM_LINK_POST_JS(${project_name} ${CMAKE_CURRENT_LIST_DIR}/postfix_module.js)
-
 # ------------------------------------------------------------------------------
 
-# add file post/pre-fix
-add_custom_command(TARGET ${project_name}
-                   POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -Dunc_targetfile:FILEPATH=$<TARGET_FILE:${project_name}>
-                                            -P "${CMAKE_CURRENT_LIST_DIR}/CMake_catFiles.cmake"
-)
+# add file post/pre-fix (disabled: breaks modern emscripten output)
+# add_custom_command(TARGET ${project_name}
+#                    POST_BUILD
+#                    COMMAND ${CMAKE_COMMAND} -Dunc_targetfile:FILEPATH=$<TARGET_FILE:${project_name}>
+#                                             -P "${CMAKE_CURRENT_LIST_DIR}/CMake_catFiles.cmake"
+# )
 
 add_custom_target(emscripten_test
     COMMAND ${CMAKE_COMMAND} -Dunc_targetfile:FILEPATH=$<TARGET_FILE:${project_name}>

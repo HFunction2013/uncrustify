@@ -45,7 +45,7 @@
  */
 
 
-#if defined (__linux__)
+#if defined (__linux__) || defined (EMSCRIPTEN)
 
 #include "keywords.h"
 #include "log_levels.h"
