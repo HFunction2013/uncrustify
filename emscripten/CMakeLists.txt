@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-
 # ------------------------------------------------------------------------------
-
-
 if(DEFINED ENV{EMSCRIPTEN})
     SET(emscripten_root_path "$ENV{EMSCRIPTEN}")
 else()
@@ -11,7 +8,6 @@ else()
         get_filename_component(emscripten_root_path ${EMCC_EXECUTABLE} DIRECTORY)
     endif()
 endif()
-
 # Abort if not found.
 if ("${emscripten_root_path}" STREQUAL "")
   MESSAGE(FATAL_ERROR "Could not locate the Emscripten directory via the \
@@ -19,27 +15,19 @@ if ("${emscripten_root_path}" STREQUAL "")
                        -Demscripten_root_path=xxx to CMake to specify the \
                        directory.")
 endif()
-
 SET(CMAKE_TOOLCHAIN_FILE "${emscripten_root_path}/cmake/Modules/Platform/Emscripten.cmake")
-
 SET(project_name "libUncrustify")
 PROJECT(${project_name})
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 #get parent folder, add src
 GET_FILENAME_COMPONENT(unc_projdir ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
-
 # ------------------------------------------------------------------------------
-
 include(CheckCXXCompilerFlag)
 include(CheckIncludeFileCXX)
 include(CheckSymbolExists)
 include(CheckCXXSymbolExists)
 include(CheckTypeSize)
-
 find_package(PythonInterp REQUIRED)
-
 #
 # Determine config
 #
@@ -48,7 +36,6 @@ if(WIN32)
 else()
   # Generate config.h
   set(avail_headers "")
-
   set(headers
     inttypes.h
     memory.h
@@ -63,7 +50,7 @@ else()
   )
   foreach(header ${headers})
     string(TOUPPER "${header}" header_uc)
-    string(REGEX REPLACE "[^A-Z0-9_]" "_" include_var "HAVE_${header_uc}")
+    string(REGEX REPLACE "[^A‑Z0‑9_]" "_" include_var "HAVE_${header_uc}")
     check_include_file_cxx("${header}" ${include_var})
     if(${include_var})
       list(APPEND avail_headers ${header})
@@ -72,9 +59,7 @@ else()
     unset(header_uc)
   endforeach()
   unset(headers)
-
   check_include_file("stdbool.h" HAVE_STDBOOL_H)
-
   set(symbols
     memset
     strcasecmp
@@ -86,19 +71,16 @@ else()
   )
   foreach(symbol ${symbols})
     string(TOUPPER "${symbol}" symbol_uc)
-    string(REGEX REPLACE "[^A-Z0-9_]" "_" symbol_var "HAVE_${symbol_uc}")
+    string(REGEX REPLACE "[^A‑Z0‑9_]" "_" symbol_var "HAVE_${symbol_uc}")
     check_cxx_symbol_exists("${symbol}" "${avail_headers}" ${symbol_var})
     unset(symbol_var)
     unset(symbol_uc)
   endforeach()
   unset(symbols)
-
   unset(avail_headers)
-
   check_type_size(_Bool _BOOL LANGUAGE C)
-
   # Emscripten: CMake compile checks fail due to sysroot setup,
-  # but all standard headers/functions are available. Force-set them.
+  # but all standard headers/functions are available. Force‑set them.
   set(HAVE_INTTYPES_H 1)
   set(HAVE_MEMORY_H 1)
   set(HAVE_STDINT_H 1)
@@ -127,16 +109,12 @@ else()
   set(PACKAGE_TARNAME "uncrustify")
   set(PACKAGE_URL "")
   set(VERSION "0.83.0")
-
   configure_file("${unc_projdir}/src/config.h.in" config.h @ONLY)
 endif()
-
 #
 # Generate uncrustify_version.h
 #
-
-set(CURRENT_VERSION "Uncrustify-0.69.0_f")
-
+set(CURRENT_VERSION "Uncrustify‑0.69.0_f")
 option(NoGitVersionString "Do not use make_version.py and git to build a version string" OFF)
 if(NoGitVersionString)
   configure_file("${unc_projdir}/src/uncrustify_version.h.in" "${PROJECT_BINARY_DIR}/uncrustify_version.h" @ONLY)
@@ -158,7 +136,6 @@ else()
     PROPERTIES GENERATED TRUE
   )
 endif()
-
 #
 # Generate token_names.h
 #
@@ -171,7 +148,6 @@ add_custom_command(
   MAIN_DEPENDENCY "${unc_projdir}/src/token_enum.h"
   COMMENT "Generating token_names.h"
 )
-
 # Set up commands for generated source files
 function(py_gen OUTPUT SCRIPT INPUT)
   set(out "${PROJECT_BINARY_DIR}/src/${OUTPUT}")
@@ -180,7 +156,6 @@ function(py_gen OUTPUT SCRIPT INPUT)
   foreach(arg IN LISTS ARGN)
     list(APPEND deps "${unc_projdir}/src/${arg}")
   endforeach()
-
   add_custom_command(
     OUTPUT "${out}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${outdir}"
@@ -193,33 +168,31 @@ function(py_gen OUTPUT SCRIPT INPUT)
     COMMENT "Generating ${OUTPUT}"
   )
 endfunction()
-
 py_gen(punctuator_table.h
   make_punctuator_table.py
   symbols_table.h
 )
-
 py_gen(options.cpp
   make_options.py
   options.h
   options.cpp.in
 )
-
 py_gen(option_enum.h
   make_option_enum.py
   option.h
   option_enum.h.in
 )
-
 py_gen(option_enum.cpp
   make_option_enum.py
   option.h
   option_enum.cpp.in
 )
-
 # ------------------------------------------------------------------------------
-
-FILE(GLOB unc_infiles "${unc_projdir}/src/*.cpp")
+# 使用GLOB_RECURSE递归获取全部src下cpp，修复子目录漏编译
+FILE(GLOB_RECURSE unc_infiles
+    "${unc_projdir}/src/*.cpp"
+)
+list(FILTER unc_infiles EXCLUDE REGEX "${PROJECT_BINARY_DIR}/.*")
 
 ADD_EXECUTABLE(${project_name}
   ${unc_infiles}
@@ -234,42 +207,42 @@ ADD_EXECUTABLE(${project_name}
   ${unc_projdir}/src/option_enum.cpp.in
   ${unc_projdir}/src/option_enum.h.in
   ${unc_projdir}/src/options.cpp.in
+  ${PROJECT_BINARY_DIR}/token_names.h
 )
 add_dependencies(${project_name} generate_version_header)
 target_compile_features(${project_name} PUBLIC cxx_std_17)
-
 include_directories(
   ${PROJECT_BINARY_DIR}
   ${PROJECT_BINARY_DIR}/src
   ${unc_projdir}/src
 )
-
 SET(unc_compile_flags "--bind -O3")
 SET_TARGET_PROPERTIES(${project_name}
     PROPERTIES
         COMPILE_FLAGS "${unc_compile_flags}"
         LINK_FLAGS "${unc_compile_flags} \
-                    -s TOTAL_MEMORY=67108864 \
+                    -s INITIAL_MEMORY=67108864 \
                     -s ALLOW_MEMORY_GROWTH=1 \
                     -s MODULARIZE=1 \
                     -s EXPORT_NAME=\"'${project_name}'\" \
-                    -s ERROR_ON_UNDEFINED_SYMBOLS=0 \
-                    -s EXPORTED_RUNTIME_METHODS=[\"UTF8ToString\",\"stringToUTF8\",\"lengthBytesUTF8\",\"writeAsciiToMemory\"] \
+                    -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
+                    -s FORCE_FILESYSTEM=1 \
+                    -s EXIT_RUNTIME=0 \
+                    -s EXPORTED_RUNTIME_METHODS=[\"UTF8ToString\",\"stringToUTF8\",\"lengthBytesUTF8\",\"writeAsciiToMemory\",\"callMain\",\"FS\",\"ccall\",\"cwrap\",\"getValue\",\"setValue\"] \
+                    -s EXPORTED_FUNCTIONS=[\"_main\",\"_malloc\",\"_free\"] \
                     -s WASM=1 \
                     -s ENVIRONMENT=web,node \
                     --pre-js ${CMAKE_CURRENT_LIST_DIR}/prefix_module.js \
                     --post-js ${CMAKE_CURRENT_LIST_DIR}/postfix_module.js \
-                    ")
-
+                    "
+)
 # ------------------------------------------------------------------------------
-
-# add file post/pre-fix (disabled: breaks modern emscripten output)
+# add file post/pre‑fix (disabled: breaks modern emscripten output)
 # add_custom_command(TARGET ${project_name}
 #                    POST_BUILD
 #                    COMMAND ${CMAKE_COMMAND} -Dunc_targetfile:FILEPATH=$<TARGET_FILE:${project_name}>
 #                                             -P "${CMAKE_CURRENT_LIST_DIR}/CMake_catFiles.cmake"
 # )
-
 add_custom_target(emscripten_test
     COMMAND ${CMAKE_COMMAND} -Dunc_targetfile:FILEPATH=$<TARGET_FILE:${project_name}>
                              -Dunc_projdir:FILEPATH=${unc_projdir}
